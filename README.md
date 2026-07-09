@@ -12,7 +12,7 @@
 ![Build](https://img.shields.io/badge/Build-Manual-lightgrey?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
-### 🧠 Team **`auf keinen fall`** 🇩🇪
+### 🧠 Team **`auf keinen fall`** 
 
 </div>
 
@@ -148,6 +148,6 @@ python src/main.py 10000 D2 asm/fibo_beq.txt asm/fibo_beq_data.txt reports/fibo_
 
 <div align="center">
 
-### ⭐ Built with effort and coffee ☕ by Team `auf keinen fall` 🇩🇪
+### ⭐ Built with effort and coffee ☕ by Team `auf keinen fall`
 
 </div>
