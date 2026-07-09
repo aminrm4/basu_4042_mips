@@ -140,10 +140,9 @@ python src/main.py 10000 D2 asm/fibo_beq.txt asm/fibo_beq_data.txt reports/fibo_
 ## 📜 License
 
 <div align="center">
-
+![No Warranty](https://img.shields.io/badge/Warranty-None-red?style=for-the-badge)
 ![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)
 ![Academic Use](https://img.shields.io/badge/Use-Academic%20Project-blue?style=for-the-badge)
-![No Warranty](https://img.shields.io/badge/Warranty-None-red?style=for-the-badge)
 
 </div>
 
