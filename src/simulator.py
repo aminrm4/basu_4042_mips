@@ -297,3 +297,30 @@ class TinyBASUSimulator:
             return state >= 4   
 
         raise ValueError(f"Unknown prediction method '{method}'")
+
+
+
+    # Updates BPT state for branch_addr based on actual outcome (Taken/Not-Taken); mutates state, no prediction logic.
+    def update_branch_prediction(self, branch_addr, actual_taken):
+           
+        method = self.prediction_method
+
+        if method in ('ST', 'SN'):
+            return 
+
+        if method == 'D1':
+            self.BPT[branch_addr] = actual_taken
+            return
+
+        if method == 'D2':
+            state = self.BPT.get(branch_addr, 1)
+            state = min(state + 1, 3) if actual_taken else max(state - 1, 0)
+            self.BPT[branch_addr] = state
+            return
+
+        if method == 'IQ':
+            state = self.BPT.get(branch_addr, 3)
+            state = min(state + 1, 7) if actual_taken else max(state - 1, 0)
+            self.BPT[branch_addr] = state
+            return
+    
