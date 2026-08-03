@@ -271,3 +271,29 @@ class TinyBASUSimulator:
         elif opcode == OPC_JAL:
             self.regs[7] = self.pc
             self.pc = self.pc + j_imm
+
+
+    # Predicts branch outcome (Taken/Not-Taken) per selected method; read-only, no BPT mutation.
+    def branch_prediction(self, branch_addr):
+       
+        method = self.prediction_method
+
+        if method == 'ST':
+            return True
+
+        if method == 'SN':
+            return False
+
+        if method == 'D1':
+            last = self.BPT.get(branch_addr, False)
+            return last
+
+        if method == 'D2':
+            state = self.BPT.get(branch_addr, 1)  
+            return state >= 2  
+
+        if method == 'IQ':
+            state = self.BPT.get(branch_addr, 3)  
+            return state >= 4   
+
+        raise ValueError(f"Unknown prediction method '{method}'")
