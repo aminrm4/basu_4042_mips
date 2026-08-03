@@ -113,4 +113,161 @@ class TinyBASUSimulator:
             self.memory[address] = inst
 
 
+    @staticmethod
+    def _resolve_immediate(token, current_addr, labels):
+        token = token.strip()
+        if token.lstrip('-').isdigit():
+            return int(token)
+        if token not in labels:
+            raise ValueError(f"Unknown label '{token}'")
+        target_addr = labels[token]
+        return target_addr - (current_addr + 1)
     
+
+    # Encodes a single assembly instruction
+    def _encode(self, mnemonic, operands, addr, labels):
+        instruction = 0
+
+        if mnemonic in REGISTER_MNEMONICS:
+            rd = reg_num(operands[0])
+            rs = reg_num(operands[1])
+            rt = reg_num(operands[2])
+            func = {'add': FUNC_ADD, 'sub': FUNC_SUB, 'slt': FUNC_SLT}[mnemonic]
+            instruction |= (OPC_R_ADD_SUB_SLT << 12) & 0xF000
+            instruction |= (rd << 9) & 0x0E00
+            instruction |= (rs << 6) & 0x01C0
+            instruction |= (rt << 3) & 0x0038
+            instruction |= func & 0x0007
+            return instruction
+
+        if mnemonic == 'addi':
+            rd = reg_num(operands[0])
+            rs = reg_num(operands[1])
+            imm = self._resolve_immediate(operands[2], addr, labels)
+            instruction |= (OPC_ADDI << 12) & 0xF000
+            instruction |= (rd << 9) & 0x0E00
+            instruction |= (rs << 6) & 0x01C0
+            instruction |= imm & 0x003F
+            return instruction
+
+        if mnemonic == 'li':
+            rd = reg_num(operands[0])
+            imm = self._resolve_immediate(operands[1], addr, labels)
+            instruction |= (OPC_LI << 12) & 0xF000
+            instruction |= (rd << 9) & 0x0E00
+            instruction |= imm & 0x003F
+            return instruction
+
+        if mnemonic == 'lui':
+            rd = reg_num(operands[0])
+            imm = self._resolve_immediate(operands[1], addr, labels)
+            instruction |= (OPC_LUI << 12) & 0xF000
+            instruction |= (rd << 9) & 0x0E00
+            instruction |= imm & 0x003F
+            return instruction
+
+        if mnemonic == 'lw':
+            rd = reg_num(operands[0])
+            rs = reg_num(operands[1])
+            imm = self._resolve_immediate(operands[2], addr, labels)
+            instruction |= (OPC_LW << 12) & 0xF000
+            instruction |= (rd << 9) & 0x0E00
+            instruction |= (rs << 6) & 0x01C0
+            instruction |= imm & 0x003F
+            return instruction
+
+        if mnemonic == 'sw':
+            rd = reg_num(operands[0])
+            rs = reg_num(operands[1])
+            imm = self._resolve_immediate(operands[2], addr, labels)
+            instruction |= (OPC_SW << 12) & 0xF000
+            instruction |= (rd << 9) & 0x0E00
+            instruction |= (rs << 6) & 0x01C0
+            instruction |= imm & 0x003F
+            return instruction
+
+        if mnemonic in BRANCH_MNEMONICS:
+            rd = reg_num(operands[0])
+            rs = reg_num(operands[1])
+            imm = self._resolve_immediate(operands[2], addr, labels)
+            opcode = OPC_BEQ if mnemonic == 'beq' else OPC_BNE
+            instruction |= (opcode << 12) & 0xF000
+            instruction |= (rd << 9) & 0x0E00
+            instruction |= (rs << 6) & 0x01C0
+            instruction |= imm & 0x003F
+            return instruction
+
+        if mnemonic in JUMP_MNEMONICS:
+            imm = self._resolve_immediate(operands[0], addr, labels)
+            opcode = OPC_JMP if mnemonic == 'jmp' else OPC_JAL
+            instruction |= (opcode << 12) & 0xF000
+            instruction |= imm & 0x0FFF
+            return instruction
+
+        raise ValueError(f"Unknown mnemonic '{mnemonic}'")
+    
+
+    # reads data files
+    def init_memory(self, data_file):
+        with open(data_file, 'r') as file:
+            lines = file.readlines()
+            for i, line in enumerate(lines):
+                line = line.split('#', 1)[0].strip()
+                if not line:
+                    continue
+                self.memory[DATA_BASE + i] = int(line, 16) & 0xFFFF
+
+    #  reads the machine word at the current pc from memory, then increments pc by one (moving on to the next instruction).
+    def fetch(self):
+        instruction = self.memory[self.pc]
+        self.pc += 1
+        return instruction
+    
+    # takes a raw 16-bit machine word and extracts every possible field from it
+    @staticmethod
+    def decode(instruction):
+        opcode = (instruction >> 12) & 0x000F
+        rd = (instruction >> 9) & 0x7
+        rs = (instruction >> 6) & 0x7
+        rt = (instruction >> 3) & 0x7
+        func = instruction & 0x07
+        i_imm = sign_extend(instruction & 0x003F, 6)
+        j_imm = sign_extend(instruction & 0x0FFF, 12)
+        return opcode, rd, rs, rt, func, i_imm, j_imm
+    
+
+    # based on opcode (and func, when relevant),performs the actual operation of the instruction
+    def execute(self, decoded):
+        opcode, rd, rs, rt, func, i_imm, j_imm = decoded
+
+        if opcode == OPC_R_ADD_SUB_SLT:
+            if func == FUNC_ADD:
+                self.regs[rd] = (self.regs[rs] + self.regs[rt]) & 0xFFFF
+            elif func == FUNC_SUB:
+                self.regs[rd] = (self.regs[rs] - self.regs[rt]) & 0xFFFF
+            elif func == FUNC_SLT:
+                self.regs[rd] = 1 if self.regs[rs] < self.regs[rt] else 0
+
+        elif opcode == OPC_ADDI:
+            self.regs[rd] = (self.regs[rs] + i_imm) & 0xFFFF
+
+        elif opcode == OPC_LI:
+            self.regs[rd] = i_imm & 0xFFFF
+
+        elif opcode == OPC_LUI:
+            self.regs[rd] = (i_imm << 10) & 0xFFFF
+
+        elif opcode == OPC_LW:
+            addr = (self.regs[rs] + i_imm) & 0x1FF
+            self.regs[rd] = self.memory[addr]
+
+        elif opcode == OPC_SW:
+            addr = (self.regs[rs] + i_imm) & 0x1FF
+            self.memory[addr] = self.regs[rd]
+
+        elif opcode == OPC_JMP:
+            self.pc = self.pc + j_imm
+
+        elif opcode == OPC_JAL:
+            self.regs[7] = self.pc
+            self.pc = self.pc + j_imm
