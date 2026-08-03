@@ -323,4 +323,64 @@ class TinyBASUSimulator:
             state = min(state + 1, 7) if actual_taken else max(state - 1, 0)
             self.BPT[branch_addr] = state
             return
-    
+
+
+
+    # Main fetch-decode-execute loop with branch prediction, misprediction penalty, and timeout/end-of-program checks.
+    def run(self, timeout_cycles):
+       
+        start_time = time.perf_counter()
+        timeout_cycles = int(timeout_cycles)
+
+        while True:
+           
+            if self.num_cycles > timeout_cycles:
+                print('timeout for executing program! Something has a bug')
+                self.timed_out = True
+                break
+
+           
+            if self.pc >= self.num_program_instructions:
+                break  
+
+           
+            raw = self.fetch()
+            decoded = self.decode(raw)
+            opcode = decoded[0]
+            i_imm = decoded[5]   
+
+            if opcode in (OPC_BEQ, OPC_BNE):
+                
+                _, rd, rs, rt, func, i_imm, j_imm = decoded
+                branch_addr = self.pc - 1
+                predicted_taken = self.branch_prediction(branch_addr)
+
+        
+                if opcode == OPC_BEQ:
+                    actual_taken = (self.regs[rd] == self.regs[rs])
+                else: 
+                    actual_taken = (self.regs[rd] != self.regs[rs])
+
+              
+                target_pc = self.pc + i_imm
+                if actual_taken:
+                    self.pc = target_pc
+
+               
+                self.num_branches += 1
+
+                if predicted_taken != actual_taken:     
+                    self.num_stalls += 1
+                    self.num_cycles += BRANCH_PENALTY
+         
+                self.update_branch_prediction(branch_addr, actual_taken)
+
+            else:
+                self.execute(decoded)
+
+          
+            self.num_instructions += 1
+            self.num_cycles += 1
+
+     
+        self.sim_runtime_ms = (time.perf_counter() - start_time) * 1000.0
