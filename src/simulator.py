@@ -384,3 +384,67 @@ class TinyBASUSimulator:
 
      
         self.sim_runtime_ms = (time.perf_counter() - start_time) * 1000.0
+
+
+
+    # Computes accuracy/speedup metrics and writes the formatted final report to report_file.
+    def report(self, report_file):
+       
+        if self.num_branches > 0:
+            correct = self.num_branches - self.num_stalls
+            accuracy = round(100.0 * correct / self.num_branches)
+        else:
+            accuracy = 0   
+
+       
+        baseline_cycles = self.num_instructions + BRANCH_PENALTY * self.num_branches
+        speedup = (baseline_cycles / self.num_cycles) if self.num_cycles > 0 else 1.0
+
+
+        lines = []
+        lines.append("tiny processor report file")
+        lines.append(f"simulation runtime: {self.sim_runtime_ms:.3f} ms")
+        lines.append(f"number of instructions: {self.num_program_instructions}")      
+        lines.append(f"number of simulation cycles: {self.num_cycles}")                
+        lines.append(f"number of executed instructions: {self.num_instructions}")     
+        lines.append(f"number of stalls: {self.num_stalls}")                           
+        lines.append(f"prediction accuracy: %{accuracy}")                             
+        lines.append(f"speedup: {speedup:.2f}")
+        lines.append("")
+        lines.append(f"program counter value: {self.pc}")                             
+        lines.append("registers value:")
+
+
+        for i in range(NUM_REGS):
+            lines.append(f"regs[{i}]:0x{self.regs[i] & 0xFFFF:04X}")
+
+        lines.append("")
+        lines.append("memory content value:")
+
+        for addr in range(MEM_SIZE):
+            value = self.memory[addr]
+            if value != 0:
+                lines.append(f"memory[{addr}] = 0x{value & 0xFFFF:04X}")
+
+
+        lines.append("others is 0x0000")  
+        report_text = "\n".join(lines) + "\n"
+
+        
+        print("Performance Metrics:")
+        print("Number of Cycles:", self.num_cycles)
+
+        with open(report_file, 'w') as file:
+            file.write(report_text)
+
+"""
+
+# Placeholder for manual/ad-hoc testing of the simulator class; currently unused.
+def tester():
+    pass
+
+# Entry point guard: runs tester() only when this file is executed directly, not when imported.
+if __name__ == '__main__':
+    tester()
+
+"""
