@@ -1,0 +1,43 @@
+tiny processor report file
+simulation runtime: 4.208 ms
+number of instructions: 21
+number of simulation cycles: 6972
+number of executed instructions: 6822
+number of stalls: 50
+prediction accuracy: %96
+speedup: 1.57
+
+program counter value: 21
+registers value:
+regs[0]:0x0000
+regs[1]:0x0000
+regs[2]:0x0033
+regs[3]:0x0000
+regs[4]:0x0032
+regs[5]:0x0032
+regs[6]:0x0000
+regs[7]:0x0033
+
+memory content value:
+memory[0] = 0x2000
+memory[1] = 0x2201
+memory[2] = 0x2402
+memory[3] = 0x2A19
+memory[4] = 0x0B69
+memory[5] = 0x2E19
+memory[6] = 0x0FF9
+memory[7] = 0x1FC1
+memory[8] = 0x0CBC
+memory[9] = 0xAC0A
+memory[10] = 0x2600
+memory[11] = 0x2800
+memory[12] = 0x0D14
+memory[13] = 0xAC03
+memory[14] = 0x06C9
+memory[15] = 0x1901
+memory[16] = 0xEFFB
+memory[17] = 0x12C0
+memory[18] = 0x1481
+memory[19] = 0xEFF4
+memory[20] = 0x1240
+others is 0x0000

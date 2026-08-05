@@ -1,5 +1,5 @@
 import sys
-from simulator_fake import TinyBASUSimulator as Simulator
+from simulator import TinyBASUSimulator as Simulator
 
 # Entry point: parses CLI args, builds the simulator, runs it, and writes the final report.
 def main():
